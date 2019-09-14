@@ -17,4 +17,17 @@ To install a new package for the current venv:
 2. Here u can see all packages installed for 
 
 
+### Flask CLI
 
+In the `app.py` file `@app.cli.command('db_create')` defines 
+the function below it as a CLI command `db_create`
+
+Open terminal and type `flask db_create` to run the code 
+for that command/function
+
+1. Create the db: `flask db_create`
+2. Seed the db: `flask db_seed`
+
+Now we can view the db
+
+<img src="./img/diag2.png">

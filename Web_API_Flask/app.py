@@ -16,6 +16,60 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'pl
 # now that config has been done, we can init our database
 db = SQLAlchemy(app)
 
+
+# 3 scripts: create db, seed db and delete db
+# --------------------------------
+# 1: DB CREATE: the decorator turns the function into a CLI command, with the command: 'db_create'
+@app.cli.command('db_create')
+def db_create():
+    db.create_all()
+    print('Database created')
+
+# 2: DB DROP: the decorator turns the function into a CLI command, with the command: 'db_drop'
+@app.cli.command('db_drop')
+def db_drop():
+    db.drop_all()
+    print('Database dropped')
+
+# 3: DB SEED: the decorator turns the function into a CLI command, with the command: 'db_seed'
+@app.cli.command('db_seed')
+def db_seed():
+    # seed db with 3 planets and 1 user
+    mercury = Planet(planet_name='Mercury',
+                     planet_type='Class D',
+                     home_star='Sol',
+                     mass=3.258e23,
+                     radius=1516,
+                     distance=35.98e6)
+    venus = Planet(planet_name='Venus',
+                     planet_type='Class K',
+                     home_star='Sol',
+                     mass=4.867e24,
+                     radius=3760,
+                     distance=67.24e6)
+    earth = Planet(planet_name='Earth',
+                     planet_type='Class M',
+                     home_star='Sol',
+                     mass=5.972e24,
+                     radius=3959,
+                     distance=92.96e6)
+    # add these planets to the db as records
+    db.session.add(mercury)
+    db.session.add(venus)
+    db.session.add(earth)
+
+    # create a new user
+    test_user = User(first_name='Mini', last_name='Sen', email='mini@mini.com', password='blaah')
+
+    # add the user to the db
+    db.session.add(test_user)
+
+    # save the changes
+    db.session.commit()
+
+    print('Database seeded')
+
+
 # DECORATOR: special capabilities to our functions
 @app.route('/')
 def hello_world():
