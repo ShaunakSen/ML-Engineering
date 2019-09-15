@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Float
 import os
+from flask_marshmallow import Marshmallow
 
 # this particular app takes its name from the name of the script
 app = Flask(__name__)
@@ -16,6 +17,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'pl
 # now that config has been done, we can init our database
 db = SQLAlchemy(app)
 
+# init marshmallow
+ma = Marshmallow(app)
+
 
 # 3 scripts: create db, seed db and delete db
 # --------------------------------
@@ -25,11 +29,13 @@ def db_create():
     db.create_all()
     print('Database created')
 
+
 # 2: DB DROP: the decorator turns the function into a CLI command, with the command: 'db_drop'
 @app.cli.command('db_drop')
 def db_drop():
     db.drop_all()
     print('Database dropped')
+
 
 # 3: DB SEED: the decorator turns the function into a CLI command, with the command: 'db_seed'
 @app.cli.command('db_seed')
@@ -42,17 +48,17 @@ def db_seed():
                      radius=1516,
                      distance=35.98e6)
     venus = Planet(planet_name='Venus',
-                     planet_type='Class K',
-                     home_star='Sol',
-                     mass=4.867e24,
-                     radius=3760,
-                     distance=67.24e6)
+                   planet_type='Class K',
+                   home_star='Sol',
+                   mass=4.867e24,
+                   radius=3760,
+                   distance=67.24e6)
     earth = Planet(planet_name='Earth',
-                     planet_type='Class M',
-                     home_star='Sol',
-                     mass=5.972e24,
-                     radius=3959,
-                     distance=92.96e6)
+                   planet_type='Class M',
+                   home_star='Sol',
+                   mass=5.972e24,
+                   radius=3959,
+                   distance=92.96e6)
     # add these planets to the db as records
     db.session.add(mercury)
     db.session.add(venus)
@@ -87,6 +93,7 @@ def super_simple():
 def not_found():
     return jsonify(message="NOT FOUND"), 404
 
+
 # URL parameters
 @app.route('/parameters')
 def parameters():
@@ -106,6 +113,19 @@ def url_variables(name: str, age: int):
         return jsonify(message="Sorry " + name + ", you are not old enough"), 401
     else:
         return jsonify(message="Welcome! " + name)
+
+
+# ----------------------------------------------------------------------
+# API endpoints to interact with the db
+
+# this route should ONLY respond to GET requests
+@app.route('/planets', methods=['GET'])
+def planets():
+    planets_list = Planet.query.all()
+    # use marshmallow to deserialize the result set
+    result = planets_schema.dump(planets_list)
+    # result is fully serialized - we can now use jsonify
+    return jsonify(result)
 
 
 # add classes for the db models
@@ -133,6 +153,26 @@ class Planet(db.Model):
     radius = Column(Float)
     distance = Column(Float)
 
+
+# ----------------------------------------------------
+# Classes for Marshmallow
+# these are the indicators that tell Marshmallow what fields we are looking for
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'first_name', 'last_name', 'email', 'password')
+
+
+class PlanetSchema(ma.Schema):
+    class Meta:
+        fields = ('planet_id', 'planet_name', 'planet_type', 'home_star', 'mass', 'radius', 'distance')
+
+
+# instantiate the schema classes - we are defining the ability to deserialize a single obj as well as multiple objects
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
+
+planet_schema = PlanetSchema()
+planets_schema = PlanetSchema(many=True)
 
 if __name__ == '__main__':
     app.run()
