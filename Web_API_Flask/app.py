@@ -127,6 +127,31 @@ def planets():
     # result is fully serialized - we can now use jsonify
     return jsonify(result)
 
+# ----------------------------------------------------------------------
+# Auth endpoints to interact with the db
+
+
+@app.route('/register', methods=['POST'])
+def register():
+    email = request.form['email']
+    # check if email exists in our db
+    test = User.query.filter_by(email=email).first()
+    if test:
+        # email already exists
+        return jsonify(message='The email: '+email+' already exists'), 409
+    else:
+        # new user
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        password = request.form['password']
+        # create the User obj
+        user = User(first_name=first_name, last_name=last_name, email=email, password=password)
+        # add the user
+        db.session.add(user)
+        # commit
+        db.session.commit()
+        return jsonify(message='User with email: '+email+' added successfully to db'), 201
+
 
 # add classes for the db models
 class User(db.Model):

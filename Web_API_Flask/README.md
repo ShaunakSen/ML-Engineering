@@ -96,3 +96,9 @@ def planets():
     return jsonify(result)
 ```
 
+### API Security
+
+We will be using JSON Web Tokens (JWT) for our API
+
+Creating the
+
