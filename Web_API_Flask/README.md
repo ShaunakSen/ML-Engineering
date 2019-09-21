@@ -184,4 +184,53 @@ Sample response for unsuccessful login:
 }
 ```
 
+### Forgot password functionality
 
+We install `flask-mail`
+
+For an email server we use [Mailtrap.io](https://mailtrap.io/)
+
+After signing up, we will get the Credentials of our SMTP and
+POP3 servers
+
+We ue these to set the config params in our API
+
+While setting username and password vars it is a good idea
+not to write them in our code simply but to use enviroment vars
+
+```python
+app.config['MAIL_USERNAME'] = os.environ['MAIL_USERNAME']
+app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
+```
+At this point flask-mail is setup and ready to go
+
+We need to create the endpoint now
+
+```python
+# Retrieve password route: accept email as param
+@app.route('/retrieve_password/<string:email>', methods=['GET'])
+def retrieve_password(email: str):
+    # query the user with the email
+    user = User.query.filter_by(email=email).first()
+    if user:
+        # user exists
+        msg = Message('Your Planetary API password is: ' + user.password, sender='admin@planetary-api.com',
+                      recipients=['shaunak1105@gmail.com'])
+        mail.send(msg)
+        # email sent - send response
+        return jsonify(message='Password sent to ' + email)
+    else:
+        return jsonify(message='Email: ' + email + ' does not exist')
+```
+
+Now we ust have to set the environment vars for this to work
+
+In pycharm we go to `Edit Configurations` and add the environment
+variables as shown below:
+
+<img src="./img/diag3.png">
+
+If we are not using pycharm we have to do this at the OS level
+
+On testing, we should get the mail with the `msg` on our
+MailTrap inbox
