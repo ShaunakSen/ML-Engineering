@@ -100,5 +100,88 @@ def planets():
 
 We will be using JSON Web Tokens (JWT) for our API
 
-Creating the
+Creating the `/register` route: This route will be able to
+add new users to our db:
+
+```python
+@app.route('/register', methods=['POST'])
+def register():
+    email = request.form['email']
+    # check if email exists in our db
+    test = User.query.filter_by(email=email).first()
+    if test:
+        # email already exists
+        return jsonify(message='The email: '+email+' already exists'), 409
+    else:
+        # new user
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        password = request.form['password']
+        # create the User obj
+        user = User(first_name=first_name, last_name=last_name, email=email, password=password)
+        # add the user
+        db.session.add(user)
+        # commit
+        db.session.commit()
+        return jsonify(message='User with email: '+email+' added successfully to db'), 201
+```
+
+Creating the `/login` route:
+
+We set the config for JWT:
+
+```python
+# add key for JWT
+app.config['JWT_SECRET_KEY'] = 'super-secret'
+```
+
+Also we init JWTManager:
+
+```python
+# init JWT Manager
+jwt = JWTManager(app)
+```
+
+We create the `/login` route:
+
+```python
+# LOGIN
+@app.route('/login', methods=['POST'])
+def login():
+    # here we are expecting the request to have come as JSON request
+    if request.is_json:
+        email = request.json['email']
+        password = request.json['password']
+    else:
+        # if req came from HTML form fields
+        email = request.form['email']
+        password = request.form['password']
+
+    test = User.query.filter_by(email=email, password=password).first()
+    if test:
+        # user found: send them the JWT token using identity as user email
+        access_token = create_access_token(identity=email)
+        return jsonify(message='Login succeeded!', access_token=access_token)
+    else:
+        # no match
+        return jsonify(message='Invalid email or password'), 401  # permission denied
+```
+
+Sample response for successful login:
+
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZGVudGl0eSI6InBhZGR5QHBhZGh5LmNvbSIsImp0aSI6IjM3Y2NmYzMwLTk3YzAtNGNjOC1iOWY5LWRiYmRkMmIzMDk5NyIsImV4cCI6MTU2OTEwMjg5OCwiZnJlc2giOmZhbHNlLCJuYmYiOjE1NjkxMDE5OTgsImlhdCI6MTU2OTEwMTk5OCwidHlwZSI6ImFjY2VzcyJ9.kmmpTVHOaf2ArkSQd5nWGiq899qDknxWrpPgUvneNKs",
+  "message": "Login succeeded!"
+}
+```
+
+Sample response for unsuccessful login:
+
+```json
+{
+  "message": "Invalid email or password"
+}
+```
+
 

@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Float
 import os
 from flask_marshmallow import Marshmallow
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token
 
 # this particular app takes its name from the name of the script
 app = Flask(__name__)
@@ -13,12 +14,18 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # But this is also where you can have your own configuration.
 # This is where we set the config for SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'planets.db')
+# add key for JWT
+app.config['JWT_SECRET_KEY'] = 'super-secret'
+
 
 # now that config has been done, we can init our database
 db = SQLAlchemy(app)
 
 # init marshmallow
 ma = Marshmallow(app)
+
+# init JWT Manager
+jwt = JWTManager(app)
 
 
 # 3 scripts: create db, seed db and delete db
@@ -130,9 +137,10 @@ def planets():
 # ----------------------------------------------------------------------
 # Auth endpoints to interact with the db
 
-
+# REGISTER
 @app.route('/register', methods=['POST'])
 def register():
+    # here we are expecting the request to have come from HTML form fields
     email = request.form['email']
     # check if email exists in our db
     test = User.query.filter_by(email=email).first()
@@ -151,6 +159,27 @@ def register():
         # commit
         db.session.commit()
         return jsonify(message='User with email: '+email+' added successfully to db'), 201
+
+# LOGIN
+@app.route('/login', methods=['POST'])
+def login():
+    # here we are expecting the request to have come as JSON request
+    if request.is_json:
+        email = request.json['email']
+        password = request.json['password']
+    else:
+        # if req came from HTML form fields
+        email = request.form['email']
+        password = request.form['password']
+
+    test = User.query.filter_by(email=email, password=password).first()
+    if test:
+        # user found: send them the JWT token using identity as user email
+        access_token = create_access_token(identity=email)
+        return jsonify(message='Login succeeded!', access_token=access_token)
+    else:
+        # no match
+        return jsonify(message='Invalid email or password'), 401  # permission denied
 
 
 # add classes for the db models
