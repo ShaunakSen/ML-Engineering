@@ -207,6 +207,48 @@ def retrieve_password(email: str):
     else:
         return jsonify(message='Email: ' + email + ' does not exist'), 401
 
+# get planet details by ID route
+@app.route('/planet_details/<int:planet_id>', methods=['GET'])
+def planet_details(planet_id: int):
+    planet = Planet.query.filter_by(planet_id=planet_id).first()
+
+    if planet:
+        # serialize the result
+        result = planet_schema.dump(planet)
+        return jsonify(result)
+
+    else:
+        return jsonify(message='planet with id:' + str(planet_id) + ' not found'), 404
+
+# route to add a new planet
+@app.route('/add_planet', methods=['POST'])
+def add_planet():
+    planet_name = request.form['planet_name']
+    # check if this planet is already in db
+    test = Planet.query.filter_by(planet_name=planet_name).first()
+
+    if test:
+        # planet exists already
+        return jsonify(message='There is already a planet by that name'), 409  # conflict
+    else:
+        # get planet details from the form
+        planet_type = request.form['planet_type']
+        home_star = request.form['home_star']
+        mass = float(request.form['mass'])
+        radius = float(request.form['radius'])
+        distance = float(request.form['distance'])
+
+        # create a new record
+
+        new_planet = Planet(planet_name=planet_name, planet_type=planet_type,
+                            home_star=home_star, mass=mass, radius=radius,
+                            distance=distance)
+        # add the obj to the db
+        db.session.add(new_planet)
+        db.session.commit()
+
+        return jsonify(message='Added the planet: ' + planet_name)
+
 
 # add classes for the db models
 class User(db.Model):

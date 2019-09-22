@@ -234,3 +234,4 @@ If we are not using pycharm we have to do this at the OS level
 
 On testing, we should get the mail with the `msg` on our
 MailTrap inbox
+
