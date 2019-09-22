@@ -235,3 +235,34 @@ If we are not using pycharm we have to do this at the OS level
 On testing, we should get the mail with the `msg` on our
 MailTrap inbox
 
+### Creating a protected route
+
+We have created a route `/add_planet` but we want only 
+logged in users to access that route. We do this by 
+adding another decorator
+
+```python
+@app.route('/add_planet', methods=['POST'])
+@jwt_required
+```
+
+Now if we are not logged in and we try to add a planet,
+we get a `401 UNAUTHORIZED` message as:
+
+```json
+{
+  "msg": "Missing Authorization Header"
+}
+```
+
+We can login and get the access token. Next while sending 
+the POST request to the `/add_planet` route, we paste
+this access token under `Authorization -> bearer token`
+
+Then we get the response:
+
+```json
+{
+  "message": "Added the planet: Pluto"
+}
+``` 
