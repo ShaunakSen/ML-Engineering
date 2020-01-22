@@ -79,3 +79,128 @@ Notice as well that these spawns aren't in any order. We're obviously retaining 
 
 Okay, so that's useful-ish, but only if our processes don't need to communicate much with eachother. If each of the processes can truly be their own unique environment, then this is fine. For example, maybe you're an insurance company and you have an algorithm that you want to run against customer data. You can split the customer data up into chunks by customer, and then feed unique chunks to processes that all use the algorithm and then input the results to a database, or something like that. In this way, we can share some memory, but, many times, we want to much more quickly pass values. Maybe we use the processes to run some functions, but then we want to bring back the answers to our python program to do more work and maybe launch more processes. Thus, this is a challenge we're going to be discussing in the next tutorial.
 
+### Getting Values from Multiprocessing Processes
+
+In the previous multiprocessing tutorial, we showed how you can spawn processes. If these processes are fine to act on their own, without communicating with eachother or back to the main program, then this is fine. These processes can also share a common database, or something like that to work together, but, many times, it will make more sense to use multiprocessing to do some processing, and then return results back to the main program. That's what we're going to cover here.
+
+To begin, we're going to import Pool
+
+Pool allows us to create a pool of worker processes
+
+Let's say we want to run a function over each item in an iterable. Let's just do:
+
+``` python
+def job(num):
+    return num * 2
+```
+
+Simple enough, now let's set up the processes:
+
+``` python
+
+from multiprocessing import Pool
+
+def job(num):
+    return num*2
+
+if __name__ == '__main__':
+    p = Pool(processes=20) # set up the Pool object, which will have 20 processes
+    data = p.map(job, [i for i in range(10000)])
+    p.close()
+    print (data)
+```
+
+In the above case, what we're going to do is first set up the Pool object, which will have 20 processes that we'll allow to do some work.
+
+Next, we're going to map the job function to a list of parameters ([i for i in range(20)]). When done, we close the pool, and then we're printing the result. In this case, we get:
+
+`[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38]`
+
+### Multiprocessing Spider Example
+
+Here, we're going to be covering the beginnings to building a spider, using the multiprocessing library. The idea here will be to quickly access and process many websites at the same time.
+
+We will obviously be using multiprocessing, and we're going to use the Pool so we can access the returned values from a process. Next, we're going to make use of the Beautiful Soup library for parsing the HTML. If you're not familiar with Beautiful Soup, you can check out the Beautiful Soup miniseries. We'll be using random and string to generate random strings, and requests to actually make the request and grab the source code.
+
+Now, with a spider, we need to figure out at least where to begin. Once with a starting point, a spider simply will continue crawling around, and then networking out to other websites via links. To figure out where to begin, we're going to write a function that generates a random combination of three characters, and then we'll slap an "http://" and a ".com" and we've got probably a decent starting place, since most 3 letter .com domain names have at least something. If one doesn't no matter, since we're going to start with parsing a handful of these.
+
+
+
+``` python
+
+def random_starting_url():
+    # generate 3 random lowercase characters
+    starting = ''.join(random.SystemRandom().choice(string.ascii_lowercase) for _ in range(3))
+    url = ''.join(['http://', starting, '.com'])
+    return url
+
+```
+
+Many times, websites will have local links, basically where the link doesn't actually start with http or https, and instead it starts with a slash, like /login/. A browser knows this is really a link to http://thewebsite.com/login/, but our program wont without us telling it:
+
+``` python
+def handle_local_links(url,link):
+    if link.startswith('/'):
+        return ''.join([url,link])
+    else:
+        return link
+```
+
+Now, we need to find those links!
+
+``` python
+
+def get_links(url):
+    try:
+        resp = requests.get(url)
+        soup = bs.BeautifulSoup(resp.text, 'lxml')
+        body = soup.body
+        links = [link.get('href') for link in body.find_all('a')]
+        links = [handle_local_links(url,link) for link in links]
+        links = [str(link.encode("ascii")) for link in links]
+        return links
+
+    except TypeError as e:
+        print(e)
+        print('Got a TypeError, probably got a None that we tried to iterate over')
+        return []
+    except IndexError as e:
+        print(e)
+        print('We probably did not find any useful links, returning empty list')
+        return []
+    except AttributeError as e:
+        print(e)
+        print('Likely got None for links, so we are throwing this')
+        return []
+    except Exception as e:
+        print(str(e))
+        # log this error 
+        return []
+```
+
+In this function, we're grabbing the source code, then parsing it with Beautiful Soup. That said, there could some issues. First, the domain may not have a server. If it does have a server, maybe there's nothing on it being returned. If they do have a website, maybe they don't allow bot connections. If we are able to connect and read the source code, we might not find any links at all. Thus, we have a few exceptions to handle for
+
+The final exception could arguably be excluded and we could further handle the explicit errors. In general, it's a bad idea to just silently move along on errors. At the very least, you might want to log the error either in a plain text file or even using something like Python's logging standard library.
+
+Now, using multiprocessing, let's put it all together:  
+
+``` python
+
+def main():
+    how_many = 50
+    p = Pool(processes=how_many)
+    parse_us = [random_starting_url() for _ in range(how_many)]
+    
+    data = p.map(get_links, [link for link in parse_us])
+    data = [url for url_list in data for url in url_list]
+    p.close()
+
+    with open('urls.txt','w') as f:
+        f.write(str(data))
+
+if __name__ == '__main__':
+    main()
+
+```
+
+
