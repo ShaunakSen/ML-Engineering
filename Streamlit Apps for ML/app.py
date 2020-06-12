@@ -43,3 +43,36 @@ st.image(img, caption="Simple image of code", use_column_width=True)
 ### Working with widgets
 st.subheader("Working with widgets")
 st.markdown("---")
+if st.checkbox(label="Show/Hide"):
+    st.text("Showing text!")
+
+# radio buttons
+mini_likes = st.radio(label="Mini likes what?", options=["Chocolates", "Clothes", "All"])
+if mini_likes == "All":
+    st.warning("Mini is greedy!")
+else:
+    st.success(f"Mini can have {mini_likes}")
+
+## select box
+
+
+## multi select
+
+mini_likes_multiple = st.multiselect(label="What mini likes to eat", options=["Badam halwa", "Gobi parantha", "Paneer", "Beej"])
+
+for mini_food in mini_likes_multiple:
+    st.text(f"Mini likes to eat {mini_food}")
+
+## slider
+age = st.slider(label="How old is mini", min_value=5, max_value=100, value=24)
+st.success(f"Mini is {age} years old!")
+
+## buttons
+mini_button = st.button(label="Hi mini!")
+
+count_hi = 0
+if mini_button:
+    st.success(f"Mini says hi {count_hi+1} times!") ### DOES NOT work
+    count_hi+=1
+
+st.text(count_hi)
