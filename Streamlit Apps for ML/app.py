@@ -76,3 +76,16 @@ if mini_button:
     count_hi+=1
 
 st.text(count_hi)
+
+### Receive use inputs
+st.subheader("Receiving user inputs")
+st.markdown("---")
+
+firstname = st.text_input(label="Enter your first name", value="Type here", max_chars=20)
+submit_button = st.button(label="Submit")
+if submit_button:
+    st.success(f"Welcome: {firstname}")
+
+## Text are: similar
+
+## Date input
