@@ -4,6 +4,8 @@ import numpy as np
 from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier
 from time import time
+import seaborn as sns
+sns.set(style="whitegrid")
 
 st.write(
     """
@@ -55,5 +57,12 @@ def make_predictions(model, user_input):
 
 predicted_class, predicted_probability =  make_predictions(trained_model, list(selected_feature_values.values()))
 
+print (predicted_class, predicted_probability)
+
 st.write(iris['target_names'][predicted_class], predicted_probability)
 
+predicted_probability_chart_data = pd.DataFrame(data={'probabilities': predicted_probability[0], 'flower class': target_names})
+
+sns.barplot(x='flower class', y='probabilities', data=predicted_probability_chart_data)
+
+st.pyplot()
