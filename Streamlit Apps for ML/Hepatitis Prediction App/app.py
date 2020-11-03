@@ -5,10 +5,22 @@ import os
 import joblib
 import matplotlib.pyplot as plt
 import matplotlib
+import hashlib
 matplotlib.use('agg')
+
+### db module
+from manage_db import *
 
 menu = ['Home', 'Login', 'Register']
 submenu = ['Visualizations', 'Predictions']
+
+def generate_hashed_pwd(password):
+    return hashlib.sha256(str.encode(password)).hexdigest()
+
+def verify_hashes(password, hashed_text):
+    if generate_hashed_pwd(password) == hashed_text:
+        return hashed_text
+    return False
 
 def render_home_view():
     st.subheader('Home')
@@ -43,7 +55,16 @@ def render_registration_view():
     ### Submit button
 
     if st.button(label='Register'):
-        pass
+        print ("Register button clicked")
+        ### 1. create users table (if already exists part is taken care of in the query)
+        create_usertable()
+        ### 2. Add that users data : you should hash the passworda and then store it in db
+        hash_password = generate_hashed_pwd(new_password)
+        print (hash_password)
+        add_user_data(new_username, hash_password)
+
+        st.success(f"Welcome!! {new_username}")
+        st.info("Login to get started")
 
 def main():
     """
