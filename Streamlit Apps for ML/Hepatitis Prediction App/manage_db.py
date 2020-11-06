@@ -37,11 +37,14 @@ def add_user_data(username, password):
     conn.close()
 
 def login_user(username, password):
+    conn = sqlite3.connect('usersdata.db')
+    c = conn.cursor()
     c.execute("""
     SELECT * FROM users_table WHERE username = ? AND password = ?
     """, (username, password))
 
     data = c.fetchall()
+    conn.close()
     return data ## returns a list
 
 def view_all_users():
