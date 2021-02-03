@@ -1,5 +1,5 @@
 import streamlit as st
-
+import copy
 import time
 
 
@@ -68,6 +68,101 @@ Notice how this is actually a cache hit! That is, you don’t actually see the �
 
 This happens because the Streamlit cache is global to all users. So everyone contributes to everyone else’s performance.
 """)
+
+st.subheader('Example 6: Mutating cached values')
+
+@st.cache(suppress_st_warning=True)
+def expensive_computation2(a, b):
+    st.write("Cache miss: expensive_computation(", a, ",", b, ") ran")
+    time.sleep(2)  # This makes the function take 2s to run
+    return {"output": a * b}  # 👈 Mutable object
+
+a = 2
+b = 21
+res = expensive_computation2(a, b)
+
+st.write("Result:", res)
+
+### create a new copy before muatating
+res_copy = copy.deepcopy(res)
+
+res_copy["output"] = "result was manually mutated"  # 👈 Mutated cached value
+
+st.write("Mutated result:", res_copy)
+
+st.code("""
+@st.cache(suppress_st_warning=True)
+def expensive_computation(a, b):
+    st.write("Cache miss: expensive_computation(", a, ",", b, ") ran")
+    time.sleep(2)  # This makes the function take 2s to run
+    return {"output": a * b}  # 👈 Mutable object
+
+a = 2
+b = 21
+res = expensive_computation(a, b)
+
+st.write("Result:", res)
+
+res["output"] = "result was manually mutated"  # 👈 Mutated cached value
+
+st.write("Mutated result:", res)
+""")
+
+st.markdown("""
+When you run this app for the first time, you should see three messages on the screen:
+- Cache miss (…)
+- Result: {output: 42}
+- Mutated result: {output: “result was manually mutated”}
+
+No surprises here. But now notice what happens when you rerun you app (i.e. press R):
+
+- Result: {output: “result was manually mutated”}
+- Mutated result: {output: “result was manually mutated”}
+- Cached object mutated. (…)
+
+What’s going on here is that Streamlit caches the output res by reference. When you mutated res["output"] outside the cached function you ended up inadvertently modifying the cache. This means every subsequent call to expensive_computation(2, 21) will return the wrong value!
+
+Since this behavior is usually not what you’d expect, Streamlit tries to be helpful and show you a warning, along with some ideas about how to fix your code.
+
+In this specific case, the fix is just to not mutate res["output"] outside the cached function. There was no good reason for us to do that anyway! Another solution would be to clone the result value with res = deepcopy(expensive_computation(2, 21)). Check out the section entitled Fixing caching issues for more information on these approaches and more.
+
+""")
+
+st.subheader('Advanced caching: The algorithm under the hood')
+
+st.markdown("""
+The cache is a key-value store, where the __key__ is a hash of:
+
+- The input parameters that you called the function with
+- The value of any external variable used in the function
+- The body of the function
+- The body of any function used inside the cached function
+
+
+And the value is a tuple of:
+
+- The cached output
+- A hash of the cached output (you’ll see why soon)
+
+For both the key and the output hash, Streamlit uses a specialized hash function that knows how to traverse code, hash special objects, and can have its behavior customized by the user.
+
+For example, when the function `expensive_computation(a, b)`, decorated with `@st.cache`, is executed with `a=2 and b=21`, Streamlit does the following:
+1. Computes the cache key
+2. If the key is found in the cache, then:
+    - Extracts the previously-cached `(output, output_hash)` tuple.
+    - Performs an __Output Mutation Check__, where a fresh hash of the output is computed and compared to the stored `output_hash`. This is why we need the `output_hash`
+        - If the two hashes are different, shows a __Cached Object Mutated__ warning. (Note: Setting `allow_output_mutation=True` disables this step).
+3. If the input key is not found in the cache, then:
+    - Executes the cached function (i.e. `output = expensive_computation(2, 21)`).
+    - Calculates the `output_hash` from the function’s `output`.
+    - Stores `key → (output, output_hash)` in the cache.
+4. Returns the output.
+
+If an error is encountered an exception is raised. If the error occurs while hashing either the key or the output an __UnhashableTypeError__ error is thrown. If you run into any issues, see fixing caching issues.
+
+
+""")
+
 
 st.markdown('---')
 
