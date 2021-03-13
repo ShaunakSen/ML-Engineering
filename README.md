@@ -11,3 +11,5 @@ This repo contains various resources related to bringing Machine Learning and De
 5. Benchmark tests: `/Benchmarking_XGBoost_with_GPU_and_HummingBird.ipynb`
 
 ---
+
+[link to about section](About.md)
