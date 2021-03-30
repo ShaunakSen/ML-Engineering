@@ -188,6 +188,94 @@ Deleted: sha256:1154ba695078d29ea6c4e1adb55c463959cd77509adf09710e2315827d66271a
 
 ![https://i.imgur.com/aJFKww0.png](https://i.imgur.com/aJFKww0.png)
 
+### Exercise questions
+
 Pull the image: nginx:1.14-alpine but dont create  a container: `docker pull nginx:1.14-alpine`
 
 Run the command `docker run --name webapp nginx:1.14-alpine`: This runs a container with the nginx:1.14-alpine image and name it webapp
+
+## More docker run commands
+
+`docker run redis:4.0` : We have specified a version using a tag here; `docker run redis:latest` - latest is the default tag. We can find more about supported tags from the dockerhub page of the image
+
+### STDIN
+
+Say we have a simple script that asks for a prompt to enter name and ops a greeting
+
+If we want to dockerize this app and run it as a docker container; it does not prompt or take in the input; it simply outputs the default message on stdout
+
+![https://i.imgur.com/URkFme5.png](https://i.imgur.com/URkFme5.png)
+
+This is because, by default the docker container does not listen to a std input. 
+
+We have to map the stdin of the host to the container using `-i` param (i for interactive)
+
+But the prompt is still missing
+
+![https://i.imgur.com/F86ZqQV.png](https://i.imgur.com/F86ZqQV.png)
+
+This is because the app prompts on the terminal and we have not attached to the container's terminal. For this use the `-t` option as well 
+
+![https://i.imgur.com/cp87jXZ.png](https://i.imgur.com/cp87jXZ.png)
+
+## Port mapping
+
+We go back to the example of the simple web app which we ran via docker:
+
+```bash
+docker run kodekloud/webapp
+```
+
+The underlying host on which docker is installed is called **docker host/engine**
+
+We can see that the server is running. But how can a user access the app?
+
+![https://i.imgur.com/n3GrI8v.png](https://i.imgur.com/n3GrI8v.png)
+
+The app is listening on port 5000, so we can access the app via port 5000, but what IP to use to access the app via a web browser?
+
+1. We can use the IP of docker container. Every container gets an IP assigned by default. In this case it is 172.17.0.2. This is an **internal IP and only accessible within the docker host**
+    1. If we open a browser within the host and go to 172.17.0.2:5000 we can access the app
+    2. Users outside the host cannot access this
+
+    ![https://i.imgur.com/53TbYeD.png](https://i.imgur.com/53TbYeD.png)
+
+2.  We can use the IP of the **docker host** instead, which is 192.168.1.5. 
+    1. For this to work we need to map the port inside the **docker container** to a free port on the **docker host**
+    2. For example we can map port 80 of [localhost](http://localhost) to port 5000 of docker container using `docker run -p 80:5000 kodekloud/webapp`
+    3. User can access the app via http://192.168.1.5:80.
+    4. All traffic on port 80 of the docker host will get routed to port 5000 of the docker container
+
+        ![https://i.imgur.com/LXaGdtK.png](https://i.imgur.com/LXaGdtK.png)
+
+    5. This way we can run multiple instances of the app and map them to different ports on the docker host. 
+
+        ![https://i.imgur.com/F7EkUMM.png](https://i.imgur.com/F7EkUMM.png)
+
+    6. We cannot map to the same port more than once
+
+    ## Volume mapping
+
+    Say we run a mysql container. The data files will be stored in location `/var/lib/mysql` **inside the docker container. The docker container has its own isolated file system and any changes to any files happen within the container**
+
+    Say we create some data and then delete the container. **All data files will be lost.** 
+
+    To persist data we need to map a directory from the container to one outside in the docker host 
+
+    ![https://i.imgur.com/ZGIwXbP.png](https://i.imgur.com/ZGIwXbP.png)
+
+    Now when the docker container runs it will implicitly mount the external directory to a folder inside the container
+
+    All data will remain in the external folder `/opt/datadir` even if we delete the container
+
+    ## Inspect and see logs
+
+    `docker inspect <container_name/id>`: See more details about a container in JSON format
+
+    What if we want to see the logs written to stdout by a container. We can do that by `docker logs <container_Id/name>`
+
+    ### Exercise
+
+    Run an instance of kodekloud/simple-webapp with a tag blue and map port 8080 on the container to 38282 on the host.
+
+    `docker run -p 38282:8080 kodekloud/simple-webapp:blue`
