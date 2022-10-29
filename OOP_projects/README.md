@@ -76,3 +76,13 @@ print (item1.__dict__)
 
 Note that `pay_rate` is not there in the attrs of the item1 instance
 
+
+### Create an inventory list functionality
+
+We basically want to list out all items in our store
+
+We can storen inventory as a class attr
+
+`__repr__`: object representation - use this to display object
+
+-- see main.py to see use of a class attr
