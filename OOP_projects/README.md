@@ -86,3 +86,75 @@ We can storen inventory as a class attr
 `__repr__`: object representation - use this to display object
 
 -- see main.py to see use of a class attr
+
+
+#### Using Class method for Separating out our data
+
+
+__Using a Class Method__:
+
+When we want to load in the data, we want to create objects from the loaded data using that function 
+
+We cannot do `item.instantiate_from_csv()` as we want `instantiate_from_csv` to take care of initializing the objs
+
+
+1. Setup fpath as a class var
+
+`fpath = os.path.join(os.getcwd(), 'OOP_projects', 'data', 'items.csv')`
+
+2. Create a class method to load in the csv and instantiate an item object for each record
+
+Note that the `cls` is like `self` but signifies the class. 
+
+```
+@classmethod
+    def instantiate_from_csv(cls):
+        """
+        Read a csv file and create instances for each record
+        """
+        fpath = cls.fpath
+        try:
+            df = pd.read_csv(fpath, index_col=False)
+        except FileNotFoundError as e:
+            print (f'Not found file at {fpath}')
+            raise
+
+        records = df.to_dict(orient='list')
+
+        for item_ in  (list(zip(records['name'], records['price'], records['quantity']))):
+            Item(name=item_[0], price=item_[1], quantity=item_[2])
+```
+
+
+#### Static method
+
+ This method can’t access or modify the class state. It is present in a class because it makes sense for the method to be present in class.
+
+ > https://www.geeksforgeeks.org/class-method-vs-static-method-python/
+
+ - We generally use static methods to create utility functions.
+
+
+Static methods do not receive the obj/class as the first arg - just like a regular function
+
+The validation of input function and a function to check if an arg is an int seem like good candidates for static methods
+
+
+```
+@staticmethod
+    def validate_input(name: str, price: float, quantity: float) -> Union[bool, AssertionError]:
+        assert price >=0 and quantity>=0, 'Price and quantity should be >= 0'
+
+    @staticmethod
+    def is_integer(num):
+        
+        # if float
+        if isinstance(num, float):
+            # if 7.0 it will return True, False if has fractional part
+            return num.is_integer()
+        # if int like 7
+        elif isinstance(num, int):
+            return True
+        return False
+
+```
