@@ -81,7 +81,7 @@ Note that `pay_rate` is not there in the attrs of the item1 instance
 
 We basically want to list out all items in our store
 
-We can storen inventory as a class attr
+We can store inventory as a class attr
 
 `__repr__`: object representation - use this to display object
 
@@ -125,6 +125,10 @@ Note that the `cls` is like `self` but signifies the class.
             Item(name=item_[0], price=item_[1], quantity=item_[2])
 ```
 
+> It can modify a class state that would apply across all the instances of the class. For example, it can modify a class variable that will be applicable to all the instances.
+
+For example if u want to instantiate hundreds of objects from a file - use a class method
+
 
 #### Static method
 
@@ -158,3 +162,49 @@ The validation of input function and a function to check if an arg is an int see
         return False
 
 ```
+
+Ok, so what is the diff bw writing static methods and independent functions outside the class? - not much, but if the function is related to the class then its good practice to use static methods
+
+Also note - do not call a static or class method from an instance level - you will not receive error but its not good practice
+
+
+### Inheritence
+
+Now we might have phones of class `Item` but these phones might be broken
+
+```
+phone1 = Item(name='nokia10', price=1000, quantity=5)
+phone1.broken_phones = 1
+phone2 = Item(name='nokia11', price=2500, quantity=5)
+phone2.broken_phones = 2
+```
+
+Now if we were to calculate broken phones
+
+```
+@classmethod
+    def calculate_broken_phones(cls):
+        for item_ in Item.inventory:
+            print (item_.broken_phones)
+
+```
+
+Not all items might have this `broken_phones` attr - so we can get error:
+
+```
+AttributeError: 'Item' object has no attribute 'broken_phones'
+```
+
+We can modify this by:
+
+```
+@classmethod
+    def calculate_broken_phones(cls):
+        num_broken_phones = 0
+        for item_ in Item.inventory:
+            if 'broken_phones' in item_.__dict__:
+                num_broken_phones += item_.broken_phones
+
+        return num_broken_phones
+```
+

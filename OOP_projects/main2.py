@@ -50,6 +50,7 @@ class Item:
         """
         for item_ in Item.inventory:
             print (item_)
+        return
 
     def __init__(self, name: str, price: float, quantity=0) -> None:
 
@@ -89,25 +90,18 @@ class Item:
         for item_ in  (list(zip(records['name'], records['price'], records['quantity']))):
             Item(name=item_[0], price=item_[1], quantity=item_[2])
 
-    
-    @classmethod
-    def calculate_broken_phones(cls):
-        num_broken_phones = 0
-        for item_ in Item.inventory:
-            if 'broken_phones' in item_.__dict__:
-                num_broken_phones += item_.broken_phones
 
-        return num_broken_phones
+# item1 = Item("Phone", 100, 1)
+# item2 = Item("Laptop", 1000, 3)
+# item3 = Item("Cable", 10, 5)
+# item4 = Item("Mouse", 50, 5)
+# item5 = Item("Keyboard", 75, 5)
 
-            
+# Item.display_inventory()
 
 Item.instantiate_from_csv()
-phone1 = Item(name='nokia10', price=1000, quantity=5)
-phone1.broken_phones = 1
-phone2 = Item(name='nokia11', price=2500, quantity=5)
-phone2.broken_phones = 2
-
+print(Item.inventory)
 Item.display_inventory()
 
-print(Item.calculate_broken_phones())
 
+print (Item.check_if_integer(9))
