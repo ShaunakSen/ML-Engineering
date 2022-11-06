@@ -208,3 +208,58 @@ We can modify this by:
         return num_broken_phones
 ```
 
+But we can build this better using inheitence as this `broken_phones` is an attr only phone type instances of class Item should have. So Phone should have its own class and inherit from Item
+
+
+How we want to design this is have a parent class - Item
+
+We want to have multiple child classes - Phone, Laptop etc.
+
+In `__init__` class of Phone - we want the `__init__` functionality of Item class but we want to also store an addnl attr like `broken_phones`
+
+`super()` allows us to do this. `super()` basically returns a proxy object which represents the parent’s class. In an inherited subclass, a parent class can be referred with the use of the super() function. The super function returns a temporary object of the superclass that allows access to all of its methods to its child class. - https://www.geeksforgeeks.org/python-super/
+
+```
+class Phone(Item):
+
+    def __init__(self, name: str, price: float, quantity=0, broken_phones=0) -> None:
+        super().__init__(name, price, quantity)
+        self.broken_phones = broken_phones
+
+Item.instantiate_from_csv()
+phone1 = Phone(name='nokia10', price=1000, quantity=5, broken_phones=2)
+Item.display_inventory()
+```
+
+```
+>>>
+Item('Phone',100.0,1)
+Item('Laptop',1000.0,3)
+Item('Cable',10.5,5)
+Item('Mouse',50.0,5)
+Item('Keyboard',75.0,5)
+Item('nokia10',1000,5)
+```
+
+Note that the Phone class is still printed as Item in `display_inventory()`
+
+This is because in `__repr__` method we had
+
+`return f"Item('{self.name}',{self.price},{self.quantity})"`
+
+instead of Item we can dynamically get the class name from the instance
+
+`return f"{self.__class__.__name__}('{self.name}',{self.price},{self.quantity})"`
+
+Now this will pick the class name from the instance passed in 
+
+Now output will be:
+
+```
+Item('Phone',100.0,1)
+Item('Laptop',1000.0,3)
+Item('Cable',10.5,5)
+Item('Mouse',50.0,5)
+Item('Keyboard',75.0,5)
+Phone('nokia10',1000,5)
+```

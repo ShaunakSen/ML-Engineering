@@ -33,7 +33,18 @@ class Item:
         Display a single Item object
         """
         # repr should be st it can be directly copied and used to create objs
-        return f"Item('{self.name}',{self.price},{self.quantity})"
+        str_rep = f"{self.__class__.__name__}("
+        for atr_, value_ in self.__dict__.items():
+            if isinstance(value_, str):
+                str_rep += f"'{value_}',"
+            else:
+                str_rep += f"{value_},"
+
+        str_rep = str_rep[:-1]
+        str_rep += ")"
+        return str_rep
+
+        # return f"{self.__class__.__name__}('{self.name}',{self.price},{self.quantity})"
 
     def add_item_to_inventory(item):
         """
@@ -41,8 +52,6 @@ class Item:
         """
         if item not in Item.inventory:
             Item.inventory.append(item)
-
-        return
 
     def display_inventory():
         """
@@ -99,15 +108,27 @@ class Item:
 
         return num_broken_phones
 
-            
+
+
+class Phone(Item):
+
+    def __init__(self, name: str, price: float, quantity=0, broken_phones=0) -> None:
+        super().__init__(name, price, quantity)
+        self.broken_phones = broken_phones
+        
+
 
 Item.instantiate_from_csv()
-phone1 = Item(name='nokia10', price=1000, quantity=5)
-phone1.broken_phones = 1
-phone2 = Item(name='nokia11', price=2500, quantity=5)
-phone2.broken_phones = 2
+# phone1 = Item(name='nokia10', price=1000, quantity=5)
+# phone1.broken_phones = 1
+# phone2 = Item(name='nokia11', price=2500, quantity=5)
+# phone2.broken_phones = 2
 
+# Item.display_inventory()
+
+# print(Item.calculate_broken_phones())
+
+
+phone1 = Phone(name='nokia10', price=1000, quantity=5, broken_phones=2)
 Item.display_inventory()
-
-print(Item.calculate_broken_phones())
 
