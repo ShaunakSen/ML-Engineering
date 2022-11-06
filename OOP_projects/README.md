@@ -263,3 +263,225 @@ Item('Mouse',50.0,5)
 Item('Keyboard',75.0,5)
 Phone('nokia10',1000,5)
 ```
+
+
+### Organizing project 
+
+- create 2 files item.py and phone.py
+- we will use a new main file main3.py to create instances
+
+main3.py:
+
+```
+from item import Item
+from phone import Phone
+
+
+Item.instantiate_from_csv()
+Item.display_inventory()
+```
+
+- works as expected
+
+### Read only attributes
+
+We can easily overwrite attr of an item
+
+```
+item_new = Item(name='Laptop', price=50000, quantity=3)
+item_new.price = 10000
+print (item_new)
+```
+
+```
+>>>
+Item('Laptop',10000,3)
+```
+
+But we might not want this behavior always - we might want critical attrs to be just read-only - like the name
+
+- we can create read-only attrs, we wont be able to overwrite this 
+
+
+We can create read only __properties__ (not attributes) using `@property`
+
+In class Item:
+
+```
+@property
+    def read_only_name(self) -> None:
+        return "AAA"
+
+```
+
+In main:
+
+```
+item_new = Item(name='Laptop', price=50000, quantity=3)
+print (item_new.read_only_name)
+item_new.read_only_name = "new name"
+```
+
+```
+>>>
+AAA
+Traceback (most recent call last):
+  File "/Users/shaunaksen/Documents/personal-projects/ML_Deployment/OOP_projects/main3.py", line 10, in <module>
+    item_new.read_only_name = "new name"
+```
+
+
+What we want - `name` should be only read-only
+
+We can achieve this using __Encapsulation__
+
+#### Encapsulation
+
+- https://www.geeksforgeeks.org/encapsulation-in-python/
+
+
+Protected members (in C++ and JAVA) are those members of the class that cannot be accessed outside the class but can be accessed from within the class and its subclasses. To accomplish this in Python, just follow the convention by prefixing the name of the member by a single underscore “_”.
+
+> Although the protected variable can be accessed out of the class as well as in the derived class(modified too in derived class), it is customary(convention not a rule) to not access the protected out the class body.
+
+In Item `__init__`:
+
+`self._name = name`
+
+In main:
+
+```
+item_new = Item(name='Bag', price=700, quantity=20)
+item_new._name = "Handbag"
+print (item_new._name)
+
+```
+
+```
+>>>
+Handbag
+```
+
+This works as normal! What we need to do is register the `_name` as a property:
+
+```
+def __init__(self, name: str, price: float, quantity=0) -> None:
+
+        Item.validate_input(name, price, quantity)
+
+        # NOTE: making name a protected class; cant be changed outside this class
+        self._name = name
+        self.price = price
+        self.quantity = quantity
+
+        # add item to inventory now that it is created        
+        Item.add_item_to_inventory(self)
+
+    @property
+    def name(self):
+        return self._name
+
+```
+
+In main:
+
+```
+item_new = Item(name='Bag', price=700, quantity=20)
+item_new.name = "Handbag"
+print (item_new._name)
+```
+
+```
+>>>
+AttributeError: can't set attribute
+```
+
+`item_new._name = "Handbag"` will still work - __so the "_" by itself does nothing!__ - we need to declare it as a `@property`
+
+After declaring it as a property, whenever we do `item.name`, python will run the code inside `@property` for that attr 
+
+Even after declaring as a property we can still set it using some special functions:
+
+In class Item
+
+```
+# NOTE: property decorator - read only attr
+    @property
+    def name(self):
+        return self._name
+```
+
+In main:
+
+```
+item_new = Item(name='Bag', price=700, quantity=20)
+item_new.name = "Handbag"
+print (item_new.name)
+```
+
+```
+>>>
+Handbag
+```
+
+This works with `__`(private) attrs as well
+
+We can be restrictive by assigning an attr as a pvt attr
+
+In that case in Item
+
+```
+def __init__(self, name: str, price: float, quantity=0) -> None:
+
+        Item.validate_input(name, price, quantity)
+
+        # NOTE: making name a protected class; cant be changed outside this class
+        self.__name = name
+        self.price = price
+        self.quantity = quantity
+```
+
+In main:
+
+```
+item_new = Item(name='Bag', price=700, quantity=20)
+print (item_new.__name)
+
+```
+
+We get:
+
+```
+AttributeError: 'Item' object has no attribute '__name'
+```
+
+We can use @property on `__` variables as well 
+
+
+#### Summary
+
+using `@property` we can specify vars as read-only
+
+After declaring it as a property, whenever we do `item.name`, python will run the code inside `@property` for that attr 
+
+Similarly after declaring a setter, python will run the code inside `@name.setter`
+wehenever we do `item1.name = 'handbag'` sor similar
+
+Here handbag will be passed as `value` in the setter function:
+
+```
+@name.setter
+    def name(self, value):
+        self._name = value
+```
+
+This is how getters and setters work - for example in the setter we can restrict length of name:
+
+```
+@name.setter
+    def name(self, value):
+        if len(value) > 100:
+            raise Exception('name is too long')
+        else:
+            self._name = value
+```
