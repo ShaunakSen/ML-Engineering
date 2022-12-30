@@ -485,3 +485,8 @@ This is how getters and setters work - for example in the setter we can restrict
         else:
             self._name = value
 ```
+
+
+
+### Principles of OOP
+
