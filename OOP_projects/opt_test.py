@@ -55,3 +55,7 @@ if __name__ == "__main__":
     print("  Params: ")
     for key, value in trial.params.items():
         print("    {}: {}".format(key, value))
+
+
+
+        
