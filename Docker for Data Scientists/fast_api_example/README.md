@@ -97,3 +97,63 @@ PS C:\Users\shaun\OneDrive\Documents\Projects\script-docker>
 
 -t : pseudo terminal
 -i: interactive
+
+
+## Fast api example
+
+See /fast_api_example
+
+Dockerfile:
+
+```
+FROM python:3.10.10
+
+# set working directory
+WORKDIR /fastapi-app 
+
+# copy requirements.txt into working dir
+COPY requirements.txt .
+
+RUN pip install -r requirements.txt
+
+COPY ./app ./app
+
+CMD [ "python", "./app/main.py"]
+```
+
+Build:
+
+`docker build -t python-fastapi .`
+
+Run:
+
+`docker run -p 8000:8000 python-fastapi`
+
+In docker desktop:
+
+![](https://gcdnb.pbrd.co/images/I6Zorit94Fs5.png)
+
+We can see this container running
+
+To go into the shell, we can click the "open in terminal" button next to the image
+
+Or we can do this from our own terminal
+
+```
+(shaunak_personal) ➜  ~ docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED         STATUS         PORTS                    NAMES
+7ba8908dcd2b   python-fastapi   "python ./app/main.py"   3 minutes ago   Up 3 minutes   0.0.0.0:8000->8000/tcp   stupefied_galois
+(shaunak_personal) ➜  ~ 
+```
+
+We can copy this container id
+
+
+```
+(shaunak_personal) ➜  ~ docker exec -it 7ba8908dcd2b /bin/sh                                                    
+# ls
+app  requirements.txt
+# 
+```
+
+Now we are in the docker shell for that container
