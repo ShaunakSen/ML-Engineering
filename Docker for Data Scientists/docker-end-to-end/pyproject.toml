@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "docker-project"
+version = "0.1.0"
+description = "simple docker apps"
+authors = ["Shaunak Sen <shaunak1105@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+Flask = "^3.0.3"
+pandas = "^2.2.2"
+requests = "^2.32.3"
+numpy = "^2.1.0"
+scikit-learn = "^1.5.1"
+loguru = "^0.7.2"
+flasgger = "^0.9.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
