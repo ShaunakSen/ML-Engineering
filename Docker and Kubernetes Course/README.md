@@ -51,6 +51,36 @@ Basically an Open Source Container Runtime
 
 ![](https://imgur.com/NTIFkTp.png)
 
+### Images vs containers in Docker
+
+In Docker, **images** and **containers** are two fundamental concepts, but they serve different purposes. Here's a comparison of the two in the context of Docker:
+
+### Docker Image:
+- **Definition**: A Docker image is a **read-only template** that contains the application code, dependencies, libraries, and environment configurations needed to run an application.
+- **Purpose**: Images serve as a blueprint for creating containers. They are static and don’t change when containers are running.
+- **Layers**: Images are built in layers, where each layer represents a file change or modification. This layered architecture allows for efficient storage and reusability.
+- **Creation**: You typically create images using a `Dockerfile`, which defines the steps to set up the environment and application in an image.
+- **Examples**: Official images like `nginx`, `mysql`, or custom images built from a `Dockerfile` for your own application.
+
+### Docker Container:
+- **Definition**: A Docker container is a **runtime instance** of a Docker image. It's a running environment that is created from an image and can be started, stopped, or deleted.
+- **Purpose**: Containers allow you to run applications in isolated environments. Unlike images, containers are **ephemeral** (they can be stopped, modified, and restarted).
+- **State**: Containers have a writable layer on top of the image, meaning any changes you make (e.g., editing files, installing new software) are applied only to that container. When the container stops, the changes can be lost unless explicitly saved.
+- **Creation**: Containers are created using the `docker run` command, which specifies the image to use along with options such as port mappings, environment variables, and volumes.
+- **Examples**: A running instance of `nginx` (created from the `nginx` image), a container running a custom Python app, or a database container running PostgreSQL.
+
+### Key Differences:
+| **Aspect**        | **Docker Image**                          | **Docker Container**                      |
+|-------------------|-------------------------------------------|-------------------------------------------|
+| **Nature**        | Blueprint or template                     | Instance of an image (a running process)  |
+| **State**         | Static and immutable                      | Dynamic and modifiable                    |
+| **Use**           | To create containers                      | To run applications                       |
+| **Storage**       | Stored on disk (shared across containers)  | Ephemeral (exists during runtime)         |
+| **Lifecycle**     | Built once, reused many times             | Created, started, stopped, removed        |
+| **Modification**  | Cannot be changed once built              | Can be modified, but changes are lost unless committed |
+
+In short, a **Docker image** is like a class in programming (defining structure and behavior), and a **Docker container** is like an object (a running instance of that class).
+
 
 ### Running an Nginx container
 
@@ -134,5 +164,155 @@ Deleted: sha256:054df1200f3e1d70e2ebeafa03c965d0dd34e7dab90b4ea24963352e5590b573
 NOTE: Now i used the "name" of the image not the running container
 
 The multiple delete statements are for all the layers which are deleted
+
+### Building images
+
+![](https://imgur.com/VB04QDq.png)
+
+DockerFile: text file with list of steps required to build an image
+
+
+#### Static html page
+
+We want to setup a new index.html in a server
+
+First we need to get a server (nginx) image and run it as a container
+
+`docker run --publish 80:80 --name webserver nginx`
+
+Next we need to figure out where the index.html is stored within the container
+
+We need to exec into the container
+
+`docker exec -it 0896b682844a9abc44d86c5f11f5c9730fb8d6c0679ea3752cf996fb2865b0c9 /bin/sh`
+
+```
+# ls
+bin  boot  dev  docker-entrypoint.d  docker-entrypoint.sh  etc  home  lib  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+# cd usr 
+# ls
+bin  games  include  lib  libexec  local  sbin  share  src
+# cd share
+# ls
+X11              bug              debianutils  dpkg        gdb       libc-bin     man         nginx        pixmaps   util-linux
+base-files       ca-certificates  dict         fontconfig  info      libgcrypt20  maven-repo  pam          polkit-1  xml
+base-passwd      common-licenses  doc          fonts       java      lintian      menu        pam-configs  tabset    zoneinfo
+bash-completion  debconf          doc-base     gcc         keyrings  locale       misc        perl5        terminfo  zsh
+# cd nginx
+# ls  
+html
+# cd html
+# ls
+50x.html  index.html
+# cat index.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+```
+
+NOTE: Doing this through the Docker app is easier as u can exec into the container and open in a terminal directly
+
+We now know where to make the changes
+
+```
+# pwd     
+/usr/share/nginx/html
+```
+
+We now write the Dockerfile
+
+```
+FROM nginx:alpine
+COPY index.html /usr/share/nginx/html
+```
+
+We build the image
+
+`docker build -t webserver-custom:v1 . `
+
+We run the container
+
+`docker run -d -p 8080:80 webserver-custom:v1`
+
+
+In localhost:8080 we can see the changes made
+
+![](https://imgur.com/5uF0AnR.png)
+
+
+#### Node site
+
+For our base image we would like to use alpine - which is a lightweight linux distro
+
+As before lets explore running some commands in the container of the image before working on the Dockerfile
+
+`docker pull alpine`
+
+Next we run the container and start an interactive shell in the container
+
+`docker run -it alpine /bin/sh`
+
+Now we are inside the container shell
+
+We run the following commands
+
+```
+apk update
+apk add nodejs
+apk add npm
+```
+
+Next we write some simple nodejs code to setup a server
+
+```
+const http = require("http");
+const hostname = "0.0.0.0";
+const port = 3000;
+
+const server = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/plain");
+  res.end("Hello from Node.js inside the container!\n");
+});
+
+server.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
+});
+```
+
+Now we need to write the Docker file
+
+```
+FROM alpine:latest
+RUN apk update
+RUN apk add nodejs
+RUN apk add npm
+RUN mkdir src
+COPY ./ /src
+WORKDIR /src
+EXPOSE 3000
+CMD [ "node", "server.js" ]
+
+```
+
+Build the image:
+`docker build -t node-custom:v1 .`
+
+Run the container
+
+`docker run -d -p 3000:3000 node-custom:v1`
+
+
+
+
+
 
 
