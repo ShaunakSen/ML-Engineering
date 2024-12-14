@@ -310,6 +310,10 @@ Run the container
 
 `docker run -d -p 3000:3000 node-custom:v1`
 
+### Dockerizing an Express App using vscode 
+
+> See the README in node-app-1
+
 
 
 
